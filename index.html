@@ -1,0 +1,193 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="gb2312"/>
+<title>年会抽奖</title>
+<script src="jquery-1.8.3.js" charset="utf-8"></script>
+<script>
+var all = ['f10009','30106','445','19645','5400','12308','566','890','f00356','789','7']
+var data = [{'prizeName':'阳光普照','winnerList':['f10009','30106','445','19645','5400']},{'prizeName':'三等奖','winnerList':['12308','566','890','891']},{'prizeName':'二等奖','winnerList':['f00356','789']},{'prizeName':'一等奖','winnerList':['7']}]
+</script>
+<link href="bootstrap.css" rel="stylesheet">
+<link href="bootstrap-responsive.css" rel="stylesheet">
+<style>
+body {
+	background:url(bg.jpg) no-repeat center top;
+}
+ul {
+	padding:0;
+	margin:0;
+}
+li { list-style:none;}
+.container {
+	width:800px;
+	height:350px;
+	margin:0 auto;
+	font:12px/1.5 Microsoft Yahei;
+	padding-top:200px;
+}
+.container h1 {
+	text-align: center;
+	font-size:50px;
+	color:#f3ff2c;
+}
+.winnerList {
+	padding-top:50px;
+	margin:0 auto;
+}
+
+.winnerList li {
+	border:1px solid #dfdfdf;
+	background:#fff;
+	text-align: center;
+	margin:10px;
+	display: inline-block;
+}
+.win5 {
+	width:800px;
+}
+.win5 li {
+	width:138px;
+	height:40px;
+	font:30px/40px Microsoft Yahei; 
+}
+.win4 {
+	width:720px;
+}
+.win4 li {
+	width:158px;
+	height:52px;
+	font:40px/52px Microsoft Yahei; 
+}
+.win3 {
+	width:600px;
+}
+.win3 li {
+	width:178px;
+	height:58px;
+	font:45px/58px Microsoft Yahei; 
+}
+.win2 {
+	width:440px;
+}
+.win2 li {
+	width:198px;
+	height:65px;
+	font:50px/65px Microsoft Yahei; 
+}
+.win1 {
+	width:220px;
+}
+.win1 li {
+	width:220px;
+	height:70px;
+	font:55px/70px Microsoft Yahei; 
+}
+</style>
+</head>
+<body>
+<div id="luckydraw" class="container">
+<h1 class="prizeName"></h1>
+<ul class="winnerList">
+</ul>
+</div>
+<script>
+var luckydraw = (function(){
+	var contaxt = $('#luckydraw'),prizeName = $('.prizeName',contaxt),winnerList = $('.winnerList',contaxt);
+	var isStart = false, currPrizeNum = 0, status = 'ready';
+	var blockArr = [], zero = '000000', blockCount = 0, t;
+	
+	for(item in all){
+		all[item] = zero.slice(all[item].length)+''+all[item];
+	}
+	
+	function createScene(idx){
+		var item = data[idx];
+		prizeName.text(item.prizeName);
+		
+		var len = item.winnerList.length;
+		(len<=5)?winnerList.addClass('win'+len):winnerList.addClass('win5');
+		winnerList.empty();
+		
+		blockArr.length = 0;
+		for(winner in item.winnerList){
+			blockArr.push(new block(item.winnerList[winner]));
+		}
+	}
+	
+	function block(str){
+		var _this = this;
+		str = zero.slice(str.length)+''+str;
+		_this.wb = str[0]
+		_this.jobnum = str.slice(1);
+		_this.el = $('<li data-winner="'+str+'"><span class="wb">0</span><span class="jn">00000</span></li>');
+		_this.el.appendTo(winnerList);
+		_this.blockStart = function(){
+			$('.wb',_this.el).text(_this.wb);
+			var r = parseInt(Math.random()*(all.length));
+			_this.t = setTimeout(function(){
+				$('.jn',_this.el).text(all[r].slice(1));
+				_this.blockStart();
+			},50);
+		}
+		_this.blockEnd = function(){
+			clearTimeout(_this.t);
+			$('.jn',_this.el).text(_this.jobnum);
+		}
+	}
+	
+	
+	
+	return {
+		init:function(){
+			var _this = this;
+			_this[status]();
+			
+			$(document).keyup(function(e){
+				var keycode = e.which;
+				if(keycode!=32&&keycode!=13)return;
+				switch(keycode){
+					case 32://spacebar 开始\结束
+					e.preventDefault();
+						if(status=='end')return;
+						((status=='ready')&&(status='start'))||((status=='start')&&(status='end'));
+						console.log(status);
+						_this[status]();
+						break;
+					case 13://enter 下一抽奖
+						if(status=='start'||status=='ready'||!data[currPrizeNum+1])return;
+						status = 'ready';
+						currPrizeNum++;
+						_this[status]();
+						break;
+					default:
+						return;
+				}
+			}).keydown(function(e){//屏蔽spacebar默认行为pagedown
+				e.preventDefault();
+			})
+		},
+		ready:function(){
+			clearTimeout(t);
+			blockCount = 0;
+			blockArr.length = 0;
+			createScene(currPrizeNum);
+		},
+		start:function(){
+			if(!blockArr[blockCount])return;
+			blockArr[blockCount].blockStart();
+			blockCount++;
+			setTimeout(luckydraw['start'],300);
+		},
+		end:function(){
+			if(!blockArr[blockCount])blockCount = 0;
+			blockArr[blockCount].blockEnd();
+			blockCount++;
+			t = setTimeout(luckydraw['end'],300);
+		}
+	}
+})();
+luckydraw.init();
+</script>
+</body>
+</html>
